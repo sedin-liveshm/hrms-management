@@ -34,8 +34,8 @@ import { cn } from "@/lib/utils";
 //logo
 function SidebarLogo({ collapsed }: { collapsed: boolean }) {
     return (
-        <div className="flex items-center gap-3 px-2 py-1">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+        <div className="flex items-center gap-1 px-2 py-1">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary" >
                 <Building2 className="size-4 text-primary-foreground" aria-hidden="true" />
             </div>
             {!collapsed && (
@@ -79,7 +79,7 @@ function IconRailItem({
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
             )}
         >
-            <Icon className="size-5" aria-hidden="true" />
+            <Icon className="size-4" aria-hidden="true" />
         </button>
     );
 
@@ -233,33 +233,41 @@ function InnerSidebar({ role }: InnerSidebarProps) {
 
             {/* Footer: Collapse toggle */}
             <SidebarFooter className="border-t border-sidebar-border p-3">
-                <Tooltip>
-                    <TooltipTrigger>
-                        <button
-                            onClick={toggleSidebar}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-xs text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                        >
-                            <ChevronLeft
-                                className={cn(
-                                    "size-4 transition-transform duration-300",
-                                    isCollapsed && "rotate-180"
-                                )}
-                                aria-hidden="true"
-                            />
-                            {!isCollapsed && <span>Collapse</span>}
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                        {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    </TooltipContent>
-                </Tooltip>
-            </SidebarFooter>
+        <Tooltip>
+          <TooltipTrigger>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={toggleSidebar}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggleSidebar();
+                }
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-xs text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground cursor-pointer"
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <ChevronLeft
+                className={cn(
+                  "size-4 transition-transform duration-300",
+                  isCollapsed && "rotate-180"
+                )}
+                aria-hidden="true"
+              />
+              {!isCollapsed && <span>Collapse</span>}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          </TooltipContent>
+        </Tooltip>
+      </SidebarFooter>
 
-            {/* Drag handle */}
-            <SidebarRail />
-        </Sidebar>
-    );
+      {/* Drag handle */}
+      <SidebarRail />
+    </Sidebar>
+  );
 }
 interface AppSidebarProps {
     role?: UserRole;

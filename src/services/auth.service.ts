@@ -1,0 +1,211 @@
+import {
+    signInWithEmailAndPassword,
+    signOut,
+    sendPasswordResetEmail,
+    confirmPasswordReset,
+    onAuthStateChanged,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+    User as FirebaseUser,
+} from "firebase/auth";
+import { auth, isFirebaseConfigured } from "@/firebase/config";
+import type { User } from "@/types/auth";
+import type { UserRole } from "@/types/navigation";
+
+export function handleAuthError(error: any): string {
+    const code = error?.code || "";
+    console.error("Auth error occurred:", error);
+
+    switch (code) {
+        case "auth/invalid-credential":
+        case "auth/wrong-password":
+        case "auth/user-not-found":
+            return "Invalid email address or password. Please try again.";
+        case "auth/user-disabled":
+            return "This account has been disabled. Please contact your HR administrator.";
+        case "auth/too-many-requests":
+            return "Too many failed login attempts. This account has been temporarily locked. Please try again later.";
+        case "auth/network-request-failed":
+            return "Network connection issue. Please check your internet connection and try again.";
+        case "auth/email-already-in-use":
+            return "An account with this email address already exists.";
+        case "auth/expired-action-code":
+            return "The password reset link has expired. Please request a new one.";
+        case "auth/invalid-action-code":
+            return "The password reset link is invalid or has already been used.";
+        case "auth/weak-password":
+            return "The password is too weak. Please choose a stronger password.";
+        default:
+            return error?.message || "An unexpected error occurred. Please try again.";
+    }
+}
+
+function determineRole(email: string | null): UserRole {
+    if (!email) return "employee";
+    const normalized = email.toLowerCase();
+    if (normalized.includes("admin")) return "admin";
+    if (normalized.includes("hr")) return "hr";
+    if (normalized.includes("manager")) return "manager";
+    return "employee";
+}
+
+function mapFirebaseUser(firebaseUser: FirebaseUser): User {
+    return {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split("@")[0] : "User"),
+        photoURL: firebaseUser.photoURL,
+        role: determineRole(firebaseUser.email),
+    };
+}
+
+let mockUserChangeListener: ((user: User | null) => void) | null = null;
+let currentMockUser: User | null = null;
+
+function getStoredMockUser(): User | null {
+    if (typeof window === "undefined") return null;
+    const local = localStorage.getItem("hrms_mock_user");
+    if (local) return JSON.parse(local);
+    const session = sessionStorage.getItem("hrms_mock_user");
+    if (session) return JSON.parse(session);
+    return null;
+}
+
+class AuthService {
+    public isFirebaseEnabled(): boolean {
+        return isFirebaseConfigured && auth !== null;
+    }
+    public async login(email: string, password: string, rememberMe = false): Promise<User> {
+        const normalizedEmail = email.trim();
+
+        if (this.isFirebaseEnabled()) {
+            try {
+                await setPersistence(
+                    auth!,
+                    rememberMe ? browserLocalPersistence : browserSessionPersistence
+                );
+                const credential = await signInWithEmailAndPassword(auth!, normalizedEmail, password);
+                return mapFirebaseUser(credential.user);
+            } catch (error) {
+                throw new Error(handleAuthError(error));
+            }
+        } else {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+            const isTestAdmin = normalizedEmail === "admin@company.com" && password === "Admin@123!";
+            const isTestEmployee = normalizedEmail === "employee@company.com" && password === "Employee@123!";
+            const isGenericValid = normalizedEmail.endsWith("@company.com") && password.length >= 8;
+
+            if (!isTestAdmin && !isTestEmployee && !isGenericValid) {
+                throw new Error("Invalid email address or password. Try admin@company.com / Admin@123!");
+            }
+
+            const role = determineRole(normalizedEmail);
+            const displayName = normalizedEmail.split("@")[0].replace(/^\w/, (c) => c.toUpperCase()) + " M";
+
+            const user: User = {
+                uid: `mock-uid-${role}-${Date.now()}`,
+                email: normalizedEmail,
+                displayName,
+                photoURL: null,
+                role,
+            };
+
+            currentMockUser = user;
+            if (typeof window !== "undefined") {
+                if (rememberMe) {
+                    localStorage.setItem("hrms_mock_user", JSON.stringify(user));
+                } else {
+                    sessionStorage.setItem("hrms_mock_user", JSON.stringify(user));
+                }
+            }
+
+            if (mockUserChangeListener) {
+                mockUserChangeListener(user);
+            }
+
+            return user;
+        }
+    }
+    public async logout(): Promise<void> {
+        if (this.isFirebaseEnabled()) {
+            try {
+                await signOut(auth!);
+            } catch (error) {
+                throw new Error(handleAuthError(error));
+            }
+        } else {
+            await new Promise((resolve) => setTimeout(resolve, 400));
+            currentMockUser = null;
+            if (typeof window !== "undefined") {
+                localStorage.removeItem("hrms_mock_user");
+                sessionStorage.removeItem("hrms_mock_user");
+            }
+            if (mockUserChangeListener) {
+                mockUserChangeListener(null);
+            }
+        }
+    }
+
+    public async sendResetLink(email: string): Promise<void> {
+        const normalizedEmail = email.trim();
+
+        if (this.isFirebaseEnabled()) {
+            try {
+                await sendPasswordResetEmail(auth!, normalizedEmail);
+            } catch (error) {
+                throw new Error(handleAuthError(error));
+            }
+        } else {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+            // In mock mode, simply simulate success for any company email
+            if (!normalizedEmail.includes("@")) {
+                throw new Error("Invalid email address format.");
+            }
+        }
+    }
+
+    public async resetPassword(code: string, newPassword: string): Promise<void> {
+        if (this.isFirebaseEnabled()) {
+            try {
+                await confirmPasswordReset(auth!, code, newPassword);
+            } catch (error) {
+                throw new Error(handleAuthError(error));
+            }
+        } else {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+            if (!code || code === "invalid") {
+                throw new Error("The password reset token is invalid or has expired.");
+            }
+        }
+    }
+
+    public subscribeToAuthChanges(callback: (user: User | null) => void): () => void {
+        if (this.isFirebaseEnabled()) {
+            return onAuthStateChanged(auth!, (firebaseUser) => {
+                if (firebaseUser) {
+                    callback(mapFirebaseUser(firebaseUser));
+                } else {
+                    callback(null);
+                }
+            });
+        } else {
+            // Mock 
+            mockUserChangeListener = callback;
+            const initialUser = getStoredMockUser();
+            currentMockUser = initialUser;
+
+            // Delay
+            const timer = setTimeout(() => {
+                callback(currentMockUser);
+            }, 500);
+
+            return () => {
+                clearTimeout(timer);
+                mockUserChangeListener = null;
+            };
+        }
+    }
+}
+
+export const authService = new AuthService();

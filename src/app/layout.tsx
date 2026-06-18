@@ -1,10 +1,10 @@
 
-
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/providers";
 
 // Inter is the project font — loaded once at root, injected as CSS variable
 const inter = Inter({
@@ -31,12 +31,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <TooltipProvider delay={300}>
-          {children}
-          {/* Sonner toast provider — accessible, animated toast notifications */}
-          <Toaster richColors position="top-right" />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider delay={300}>
+            {children}
+            {/* Sonner toast provider — accessible, animated toast notifications */}
+            <Toaster richColors position="top-right" />
+          </TooltipProvider>
+        </AuthProvider>
       </body>
     </html>
   );
 }
+
