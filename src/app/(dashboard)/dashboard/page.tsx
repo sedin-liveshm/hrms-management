@@ -1,12 +1,3 @@
-/**
- * Dashboard Page — src/app/(dashboard)/dashboard/page.tsx
- *
- * The main landing page after login. Shows KPI cards and recent activity.
- * Server Component — data fetching will be added on Day 4+.
- *
- * DESIGN: Four stat cards + two section cards side by side.
- * Uses only components from @/components/common — zero ad-hoc UI.
- */
 
 import type { Metadata } from "next";
 import {
@@ -30,7 +21,7 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-// ─── Mock Data (replace with Firebase data on Day 4) ─────────────────────────
+// ─── Mock Data
 const stats = [
   {
     label: "Total Employees",

@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/providers";
 
-// Inter is the project font — loaded once at root, injected as CSS variable
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",

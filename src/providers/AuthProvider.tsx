@@ -1,79 +1,64 @@
 "use client";
 
-import React, { createContext, useEffect, useState, useMemo } from "react";
-import type { User, AuthContextType } from "@/types/auth";
+import React, { useEffect } from "react";
+import { useAuthStore } from "@/store/auth-store";
 import { authService } from "@/services/auth.service";
+import { userService } from "@/services/user.service";
+import { usePathname } from "next/navigation";
+import { PageLoader } from "@/components/common";
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+export function AuthProvider({ children }: AuthProviderProps) {
+  const setUser = useAuthStore((state) => state.setUser);
+  const clearUser = useAuthStore((state) => state.clearUser);
+  const loading = useAuthStore((state) => state.loading);
 
   useEffect(() => {
-    const unsubscribe = authService.subscribeToAuthChanges((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+    // 1. Subscribe to Auth status changes from Firebase or Mock
+    const unsubscribe = authService.subscribeToAuthChanges(async (authUser) => {
+      if (authUser) {
+        try {
+          // 2. Fetch full Firestore profile for user
+          let fullProfile = await userService.getUserByUid(authUser.uid);
+          
+          if (!fullProfile) {
+            // Seed profile if not found
+            fullProfile = await userService.createUser(authUser.uid, {
+              email: authUser.email || "",
+              name: authUser.displayName || authUser.email?.split("@")[0] || "User",
+              role: authUser.role,
+            });
+          }
+          
+          setUser(fullProfile);
+        } catch (error) {
+          console.error("AuthProvider: failed to fetch profile for user:", authUser.uid, error);
+          clearUser();
+        }
+      } else {
+        clearUser();
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [setUser, clearUser]);
 
-  const login = async (email: string, password: string, rememberMe = false) => {
-    setLoading(true);
-    try {
-      const authenticatedUser = await authService.login(email, password, rememberMe);
-      setUser(authenticatedUser);
-    } catch (error) {
-      setUser(null);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const pathname = usePathname();
 
-  const logout = async () => {
-    setLoading(true);
-    try {
-      await authService.logout();
-      setUser(null);
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+  // If the path is a public auth page (e.g. login, reset, forgot password),
+  // we do not block rendering with the page skeleton, to avoid flashing.
+  const isPublicRoute =
+    pathname === "/login" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password";
 
-  const resetPassword = async (email: string) => {
-    try {
-      await authService.sendResetLink(email);
-    } catch (error) {
-      throw error;
-    }
-  };
+  if (loading && !isPublicRoute) {
+    // Render the dashboard skeleton during the initial loading phase
+    return <PageLoader />;
+  }
 
-  const confirmResetPassword = async (code: string, newPassword: string) => {
-    try {
-      await authService.resetPassword(code, newPassword);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const isAuthenticated = !!user;
-
-  const value = useMemo(
-    () => ({
-      user,
-      loading,
-      isAuthenticated,
-      login,
-      logout,
-      resetPassword,
-      confirmResetPassword,
-    }),
-    [user, loading, isAuthenticated]
-  );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <>{children}</>;
 }

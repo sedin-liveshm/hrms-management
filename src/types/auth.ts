@@ -1,7 +1,8 @@
 import type { UserRole } from "./navigation";
 
 export interface User {
-      uid: string;
+  uid: string;
+  name: string | null;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
