@@ -6,9 +6,9 @@ export const MODULE_PERMISSIONS: Record<string, UserRole[]> = {
     profile: ["admin", "hr", "manager", "employee"],
     leave: ["admin", "hr", "manager", "employee"],
     attendance: ["admin", "hr", "manager", "employee"],
-    employees: ["admin", "hr"],
-    payroll: ["admin", "hr"],
-    settings: ["admin"],
+    employees: ["admin", "hr", "manager"],      // Employees List/CRUD: admin, hr, manager
+    payroll: ["admin", "hr"],        // Payroll module: admin, hr
+    settings: ["admin"],             // Settings module: admin
 };
 
 export const ROUTE_TO_MODULE_MAP: Record<string, string> = {
@@ -38,10 +38,13 @@ export function isRouteAllowed(pathname: string, role: UserRole): boolean {
     const matchedRoute = Object.keys(ROUTE_TO_MODULE_MAP)
         .sort((a, b) => b.length - a.length)
         .find((route) => pathname === route || pathname.startsWith(route + "/"));
+
     if (!matchedRoute) {
         return true;
     }
+
     const moduleName = ROUTE_TO_MODULE_MAP[matchedRoute];
     const allowedRoles = MODULE_PERMISSIONS[moduleName];
+
     return allowedRoles ? allowedRoles.includes(role) : false;
 }

@@ -53,6 +53,7 @@ function determineRole(email: string | null): UserRole {
 function mapFirebaseUser(firebaseUser: FirebaseUser): User {
     return {
         uid: firebaseUser.uid,
+        name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split("@")[0] : "User"),
         email: firebaseUser.email,
         displayName: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split("@")[0] : "User"),
         photoURL: firebaseUser.photoURL,
@@ -105,6 +106,7 @@ class AuthService {
 
             const user: User = {
                 uid: `mock-uid-${role}-${Date.now()}`,
+                name: displayName,
                 email: normalizedEmail,
                 displayName,
                 photoURL: null,
