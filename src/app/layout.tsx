@@ -33,7 +33,6 @@ export default function RootLayout({
         <AuthProvider>
           <TooltipProvider delay={300}>
             {children}
-            {/* Sonner toast provider — accessible, animated toast notifications */}
             <Toaster richColors position="top-right" />
           </TooltipProvider>
         </AuthProvider>

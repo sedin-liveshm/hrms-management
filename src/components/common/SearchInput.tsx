@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 interface SearchInputProps {
   placeholder?: string;
-  /** Called on every keystroke */
   onSearch?: (value: string) => void;
   className?: string;
   defaultValue?: string;

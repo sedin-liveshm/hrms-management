@@ -17,7 +17,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loading = useAuthStore((state) => state.loading);
 
   useEffect(() => {
-    // 1. Subscribe to Auth status changes from Firebase or Mock
     const unsubscribe = authService.subscribeToAuthChanges(async (authUser) => {
       if (authUser) {
         try {

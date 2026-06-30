@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EmployeeStatusBadge } from "./EmployeeStatusBadge";
 import type { Employee } from "@/types/employee";
+import Image from "next/image";
 import {
     Briefcase,
     Calendar,
@@ -28,7 +29,6 @@ export function EmployeeDetails({ employee }: EmployeeDetailsProps) {
         .toUpperCase()
         .slice(0, 2);
 
-    // Format currency (INR)
     const formatSalary = (val: number) => {
         return new Intl.NumberFormat("en-IN", {
             style: "currency",
@@ -37,7 +37,6 @@ export function EmployeeDetails({ employee }: EmployeeDetailsProps) {
         }).format(val);
     };
 
-    // Format Date (long format)
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "N/A";
         try {
@@ -53,15 +52,22 @@ export function EmployeeDetails({ employee }: EmployeeDetailsProps) {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* Left Column: Quick Profile Summary Card */}
             <Card className="lg:col-span-1 rounded-2xl border-border bg-card text-card-foreground shadow-sm h-fit">
                 <CardContent className="pt-8 flex flex-col items-center text-center">
-                    <Avatar className="size-28 border-4 border-primary/20 shadow-md">
-                        <AvatarImage src={employee.photoURL || undefined} alt={employee.name} className="object-cover" />
-                        <AvatarFallback className="bg-primary/10 text-2xl font-bold text-primary">
-                            {initials}
-                        </AvatarFallback>
+                    <Avatar className="size-28 overflow-hidden border-4 border-primary/20 shadow-md">
+                        {employee.photoURL ? (
+                            <Image
+                                width={112}
+                                height={112}
+                                src={employee.photoURL}
+                                alt={employee.name}
+                                className="h-full w-full object-cover"
+                            />
+                        ) : (
+                            <AvatarFallback className="bg-primary/10 text-2xl font-bold text-primary">
+                                {initials}
+                            </AvatarFallback>
+                        )}
                     </Avatar>
 
                     <h2 className="text-xl font-bold text-foreground mt-4 leading-tight">
