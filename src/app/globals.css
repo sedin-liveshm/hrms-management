@@ -1,9 +1,35 @@
+/**
+ * globals.css — The single source of truth for the HRMS design system.
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * HOW THE COLOR SYSTEM WORKS
+ * ═══════════════════════════════════════════════════════════════
+ *
+ * All colors are CSS custom properties defined in :root {}.
+ * Tailwind v4's @theme inline block maps those variables to
+ * utility classes like bg-primary, text-sidebar, etc.
+ *
+ * TO CHANGE THE ENTIRE COLOR PALETTE:
+ *   1. Find the :root {} block below
+ *   2. Change the hex values you want
+ *   3. Done — zero component changes needed
+ *
+ * Example: To change the primary green to blue:
+ *   --primary: #3b82f6;   ← was #46b952
+ *
+ * ═══════════════════════════════════════════════════════════════
+ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── Tailwind v4 theme mapping ─────────────────────────────────
+   Maps CSS variables → Tailwind utility classes.
+   Do NOT put actual color values here. Only var() references.
+   ────────────────────────────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,136 +74,171 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ─── HRMS Light Theme ───────────────────────────────────────────
+   ▶ TO RETHEME: Change hex values here only.
+   ▶ All components automatically inherit these changes.
+   ────────────────────────────────────────────────────────────── */
 :root {
-  /* Background */
-  --background: #fcf0e8;
-  --foreground: #5b2a0b;
+  /* Surfaces */
+  --background: #f6f0ef;        /* Page background — warm off-white */
+  --foreground: #3a2d2c;        /* Primary text — deep brown */
 
-  /* Card */
-  --card: #ffffff;
-  --card-foreground: #5b2a0b;
+  /* Cards & Popovers */
+  --card: #ffffff;              /* Card surface — pure white */
+  --card-foreground: #3a2d2c;
 
-  /* Popover */
   --popover: #ffffff;
-  --popover-foreground: #5b2a0b;
+  --popover-foreground: #3a2d2c;
 
-  /* Primary (Coffee Bean) */
-  --primary: #e3681c;
+  /* Brand Colors */
+  --primary: #46b952;           /* Primary action — mint green */
   --primary-foreground: #ffffff;
 
-  /* Secondary (Copperwood) */
-  --secondary: #ff9100;
+  --secondary: #946b79;         /* Secondary accent — muted rose */
   --secondary-foreground: #ffffff;
 
-  /* Muted */
-  --muted: #f9e1d2;
-  --muted-foreground: #883f11;
-
-  /* Accent (Chocolate Brown) */
-  --accent: #ff8400;
-  --accent-foreground: #331a00;
-
-  /* Destructive */
-  --destructive: #ff0d00;
-
-  /* Border / Input */
-  --border: #f4c3a4;
-  --input: #f4c3a4;
-
-  /* Ring */
-  --ring: #e3681c;
-
-  /* Charts */
-  --chart-1: #e3681c;
-  --chart-2: #ff9100;
-  --chart-3: #ff8400;
-  --chart-4: #f5740a;
-  --chart-5: #b65316;
-
-  --radius: 0.75rem;
-
-  /* Sidebar */
-  --sidebar: #5b2a0b;
-  --sidebar-foreground: #ffffff;
-
-  --sidebar-primary: #ff9100;
-  --sidebar-primary-foreground: #331d00;
-
-  --sidebar-accent: #883f11;
-  --sidebar-accent-foreground: #ffffff;
-
-  --sidebar-border: #883f11;
-  --sidebar-ring: #ff9100;
-}
-
-.dark {
-  /* Background */
-  --background: #200f04;
-  --foreground: #fcf0e8;
-
-  /* Card */
-  --card: #2d1506;
-  --card-foreground: #ffffff;
-
-  /* Popover */
-  --popover: #2d1506;
-  --popover-foreground: #ffffff;
-
-  /* Primary */
-  --primary: #eea577;
-  --primary-foreground: #2d1506;
-
-  /* Secondary */
-  --secondary: #f7903b;
-  --secondary-foreground: #311702;
-
-  /* Muted */
-  --muted: #5b2a0b;
-  --muted-foreground: #f9e1d2;
+  /* Muted / Subtle */
+  --muted: #ece1df;             /* Subtle backgrounds */
+  --muted-foreground: #91716e;  /* Secondary text */
 
   /* Accent */
-  --accent: #ffb566;
-  --accent-foreground: #331a00;
+  --accent: #bfa6ae;
+  --accent-foreground: #3a2d2c;
 
-  /* Destructive */
-  --destructive: #ff3d33;
+  /* Semantic */
+  --destructive: #ba4576;       /* Danger / delete */
 
-  /* Border */
-  --border: #5b2a0b;
-  --input: #5b2a0b;
+  /* Borders & Inputs */
+  --border: #dac3be;            /* Component borders */
+  --input: #dac3be;             /* Input borders */
+  --ring: #46b952;              /* Focus ring — matches primary */
 
-  /* Ring */
-  --ring: #eea577;
+  /* Border Radius — change once to retheme all rounded corners */
+  --radius: 0.75rem;
 
-  /* Charts */
-  --chart-1: #eea577;
-  --chart-2: #f7903b;
-  --chart-3: #ffb566;
-  --chart-4: #f5740a;
-  --chart-5: #e3681c;
+  /* Chart Colors */
+  --chart-1: #46b952;
+  --chart-2: #946b79;
+  --chart-3: #ba4576;
+  --chart-4: #a2695d;
+  --chart-5: #91716e;
 
-  /* Sidebar */
-  --sidebar: #2d1506;
-  --sidebar-foreground: #ffffff;
-
-  --sidebar-primary: #f7903b;
-  --sidebar-primary-foreground: #311702;
-
-  --sidebar-accent: #5b2a0b;
+  /* ─── Sidebar ─────────────────────────────────────────────────
+     The sidebar uses its own token set so it can have a dark
+     background while the main content stays light.
+     ──────────────────────────────────────────────────────────── */
+  --sidebar: #3a2d2c;                   /* Sidebar background — dark brown */
+  --sidebar-foreground: #ffffff;        /* Sidebar text */
+  --sidebar-primary: #46b952;           /* Active item background */
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #574442;            /* Hover state */
   --sidebar-accent-foreground: #ffffff;
-
-  --sidebar-border: #5b2a0b;
-  --sidebar-ring: #f7903b;
+  --sidebar-border: #574442;
+  --sidebar-ring: #46b952;
 }
 
-* {
-  @apply border-border outline-ring/50;
+/* ─── HRMS Dark Theme ────────────────────────────────────────────
+   Dark mode variant — same token names, darker values.
+   ────────────────────────────────────────────────────────────── */
+.dark {
+  --background: #1d1716;
+  --foreground: #f4f1f0;
+
+  --card: #3a2d2c;
+  --card-foreground: #ffffff;
+
+  --popover: #3a2d2c;
+  --popover-foreground: #ffffff;
+
+  --primary: #46b952;
+  --primary-foreground: #ffffff;
+
+  --secondary: #946b79;
+  --secondary-foreground: #ffffff;
+
+  --muted: #574442;
+  --muted-foreground: #d3c6c5;
+
+  --accent: #574442;
+  --accent-foreground: #ffffff;
+
+  --destructive: #c86a91;
+
+  --border: #574442;
+  --input: #574442;
+  --ring: #46b952;
+
+  --chart-1: #46b952;
+  --chart-2: #946b79;
+  --chart-3: #ba4576;
+  --chart-4: #a2695d;
+  --chart-5: #91716e;
+
+  --sidebar: #150f11;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #46b952;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #3a2d2c;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #574442;
+  --sidebar-ring: #46b952;
 }
 
-body {
-  @apply bg-background text-foreground;
+/* ─── Base Layer ─────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  html {
+    @apply font-sans;
+    /* Smooth scrolling for all anchor navigation */
+    scroll-behavior: smooth;
+  }
+
+  /* Typography scale */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Custom scrollbar — subtle, matches the theme */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
 }
 
-html {
-  @apply font-sans;
+/* ─── Utility Classes ────────────────────────────────────────── */
+@layer utilities {
+  /* Page fade-in animation for route transitions */
+  .page-fade-in {
+    animation: pageFadeIn 0.2s ease-in-out;
+  }
+
+  @keyframes pageFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
