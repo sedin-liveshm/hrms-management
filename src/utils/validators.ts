@@ -57,8 +57,14 @@ export const employeeSchema = z.object({
     status: z.enum(["active", "inactive", "on-leave"] as const),
     photoURL: z.string().url("Please enter a valid image URL").optional().or(z.literal("")).or(z.null()),
 });
+export const announcementSchema = z.object({
+  title: z.string(),
+  content: z.string()
+});
+
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+export type AnnouncementFormValues = z.infer<typeof announcementSchema>;

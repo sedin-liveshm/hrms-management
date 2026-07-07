@@ -7,6 +7,19 @@ export interface User {
   displayName: string | null;
   photoURL: string | null;
   role: UserRole;
+  department?: string;
+  designation?: string;
+  employeeId?: string;
+  isActive?: boolean;
+  phone?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  manager?: string;
+  joiningDate?: string;
+  salary?: number;
+  status?: "active" | "inactive" | "on-leave";
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthContextType {
