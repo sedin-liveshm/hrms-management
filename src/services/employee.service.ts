@@ -7,13 +7,22 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import type { Employee } from "@/types/employee";
 
 class EmployeeService {
+  /**
+   * Checks if Firestore is active and initialized.
+   */
   private isFirebaseEnabled(): boolean {
     return isFirebaseConfigured && db !== null;
   }
+
+  /**
+   * Retrieves all employees from the system (Firestore or Mock LocalStorage).
+   */
   public async getAllEmployees(): Promise<Employee[]> {
     if (this.isFirebaseEnabled()) {
       try {
@@ -24,7 +33,7 @@ class EmployeeService {
           // Ensure we only treat items with an employeeId or role as valid employee profiles
           if (data.employeeId || data.role) {
             list.push({
-              uid: d.id,
+              uid: data.uid || d.id, // Fallback to doc ID if uid is null (keeps list keys unique)
               ...data,
             } as Employee);
           }
@@ -45,14 +54,17 @@ class EmployeeService {
           try {
             const profile = JSON.parse(localStorage.getItem(key) || "");
             if (profile && (profile.employeeId || profile.role)) {
-              list.push(profile as Employee);
+              list.push({
+                ...profile,
+                uid: profile.uid || profile.employeeId,
+              } as Employee);
             }
           } catch (e) {
             console.error("Failed to parse local profile:", e);
           }
         }
       }
-      // Sort by creation date or name
+      // Sort by creation date
       return list.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -62,16 +74,28 @@ class EmployeeService {
   }
 
   /**
-   * Retrieves a single employee by their UID.
+   * Retrieves a single employee by their UID or Employee ID.
    */
-  public async getEmployeeById(uid: string): Promise<Employee | null> {
+  public async getEmployeeById(id: string): Promise<Employee | null> {
     if (this.isFirebaseEnabled()) {
       try {
-        const docRef = doc(db!, "users", uid);
+        // 1. Try directly via doc id (works for employeeId or legacy uid)
+        const docRef = doc(db!, "users", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          return { uid: docSnap.id, ...docSnap.data() } as Employee;
+          const data = docSnap.data();
+          return { uid: data.uid || docSnap.id, ...data } as Employee;
         }
+
+        // 2. Try querying by the uid field
+        const q = query(collection(db!, "users"), where("uid", "==", id));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const matchedDoc = querySnapshot.docs[0];
+          const data = matchedDoc.data();
+          return { uid: data.uid || matchedDoc.id, ...data } as Employee;
+        }
+
         return null;
       } catch (error) {
         console.error("Firestore getEmployeeById failed:", error);
@@ -79,9 +103,27 @@ class EmployeeService {
       }
     } else {
       if (typeof window === "undefined") return null;
-      const stored = localStorage.getItem(`hrms_profile_${uid}`);
+
+      // Try fetching by employeeId key first
+      const stored = localStorage.getItem(`hrms_profile_${id}`);
       if (stored) {
-        return JSON.parse(stored) as Employee;
+        const parsed = JSON.parse(stored) as Employee;
+        return { ...parsed, uid: parsed.uid || parsed.employeeId };
+      }
+
+      // Search mock local records for matching uid or employeeId
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("hrms_profile_")) {
+          try {
+            const profile = JSON.parse(localStorage.getItem(key) || "");
+            if (profile && (profile.uid === id || profile.employeeId === id)) {
+              return { ...profile, uid: profile.uid || profile.employeeId } as Employee;
+            }
+          } catch (e) {
+            console.error("Failed to parse local profile:", e);
+          }
+        }
       }
       return null;
     }
@@ -89,23 +131,25 @@ class EmployeeService {
 
   /**
    * Creates a new employee document in the users database.
+   * Keyed by employeeId with uid set to null initially.
    */
   public async createEmployee(
-    data: Omit<Employee, "uid" | "createdAt" | "updatedAt"> & { uid?: string }
+    data: Omit<Employee, "uid" | "createdAt" | "updatedAt" | "authCreated" | "activatedAt">
   ): Promise<Employee> {
-    const uid = data.uid || `emp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const nowStr = new Date().toISOString();
 
     const newEmployee: Employee = {
       ...data,
-      uid,
+      uid: null, // No auth UID exists yet
+      status: "invited",
+      authCreated: false,
       createdAt: nowStr,
       updatedAt: nowStr,
     };
 
     if (this.isFirebaseEnabled()) {
       try {
-        const docRef = doc(db!, "users", uid);
+        const docRef = doc(db!, "users", data.employeeId);
         await setDoc(docRef, newEmployee);
         return newEmployee;
       } catch (error) {
@@ -114,7 +158,7 @@ class EmployeeService {
       }
     } else {
       if (typeof window !== "undefined") {
-        localStorage.setItem(`hrms_profile_${uid}`, JSON.stringify(newEmployee));
+        localStorage.setItem(`hrms_profile_${data.employeeId}`, JSON.stringify(newEmployee));
       }
       return newEmployee;
     }
@@ -122,8 +166,9 @@ class EmployeeService {
 
   /**
    * Updates an existing employee document.
+   * Resolves target document by ID or UID query.
    */
-  public async updateEmployee(uid: string, data: Partial<Employee>): Promise<void> {
+  public async updateEmployee(id: string, data: Partial<Employee>): Promise<void> {
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -131,18 +176,35 @@ class EmployeeService {
 
     if (this.isFirebaseEnabled()) {
       try {
-        const docRef = doc(db!, "users", uid);
-        await setDoc(docRef, updateData, { merge: true });
+        // 1. Try directly via doc id
+        const docRef = doc(db!, "users", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          await updateDoc(docRef, updateData);
+          return;
+        }
+
+        // 2. Query by uid field
+        const q = query(collection(db!, "users"), where("uid", "==", id));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const matchedDocRef = doc(db!, "users", querySnapshot.docs[0].id);
+          await updateDoc(matchedDocRef, updateData);
+          return;
+        }
+
+        throw new Error(`Employee profile not found with ID: ${id}`);
       } catch (error) {
         console.error("Firestore updateEmployee failed:", error);
         throw error;
       }
     } else {
       if (typeof window !== "undefined") {
-        const existing = await this.getEmployeeById(uid);
+        const existing = await this.getEmployeeById(id);
         if (existing) {
           const merged = { ...existing, ...updateData };
-          localStorage.setItem(`hrms_profile_${uid}`, JSON.stringify(merged));
+          const key = existing.employeeId;
+          localStorage.setItem(`hrms_profile_${key}`, JSON.stringify(merged));
         } else {
           throw new Error("Employee not found in local mock database");
         }
@@ -151,7 +213,7 @@ class EmployeeService {
   }
 
   /**
-   * Soft deletes an employee (sets status to inactive and isActive to false).
+   * Soft deletes an employee (sets status to inactive).
    */
   public async deleteEmployee(uid: string): Promise<void> {
     return this.updateEmployee(uid, {
@@ -165,7 +227,16 @@ class EmployeeService {
   private ensureMockDataSeeded() {
     if (typeof window === "undefined") return;
 
-    // Check if there are already any profile keys in localStorage
+    // Clear legacy keys that do not contain EMP-
+    const legacyKeys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("hrms_profile_") && !key.includes("EMP-")) {
+        legacyKeys.push(key);
+      }
+    }
+    legacyKeys.forEach((k) => localStorage.removeItem(k));
+
     let hasProfiles = false;
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -192,6 +263,7 @@ class EmployeeService {
           joiningDate: "2020-01-01",
           salary: 150000,
           status: "active",
+          authCreated: true,
           photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
           createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365).toISOString(),
           updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365).toISOString(),
@@ -210,6 +282,7 @@ class EmployeeService {
           joiningDate: "2021-06-15",
           salary: 95000,
           status: "active",
+          authCreated: true,
           photoURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
           createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200).toISOString(),
           updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200).toISOString(),
@@ -228,6 +301,7 @@ class EmployeeService {
           joiningDate: "2022-02-01",
           salary: 120000,
           status: "active",
+          authCreated: true,
           photoURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
           createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 100).toISOString(),
           updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 100).toISOString(),
@@ -246,6 +320,7 @@ class EmployeeService {
           joiningDate: "2023-01-15",
           salary: 80000,
           status: "active",
+          authCreated: true,
           photoURL: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200",
           createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 50).toISOString(),
           updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 50).toISOString(),
@@ -264,6 +339,7 @@ class EmployeeService {
           joiningDate: "2022-08-01",
           salary: 90000,
           status: "active",
+          authCreated: true,
           photoURL: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200",
           createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
           updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
@@ -281,7 +357,8 @@ class EmployeeService {
           role: "employee",
           joiningDate: "2023-03-20",
           salary: 75000,
-          status: "on-leave",
+          status: "active",
+          authCreated: true,
           photoURL: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200",
           createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
           updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
@@ -289,7 +366,7 @@ class EmployeeService {
       ];
 
       mockList.forEach((emp) => {
-        localStorage.setItem(`hrms_profile_${emp.uid}`, JSON.stringify(emp));
+        localStorage.setItem(`hrms_profile_${emp.employeeId}`, JSON.stringify(emp));
       });
     }
   }

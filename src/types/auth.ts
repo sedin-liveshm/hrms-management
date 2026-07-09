@@ -1,12 +1,13 @@
 import type { UserRole } from "./navigation";
 
+
 export interface User {
   uid: string;
-  name: string | null;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
   role: UserRole;
+  name?: string;
   department?: string;
   designation?: string;
   employeeId?: string;
@@ -17,7 +18,8 @@ export interface User {
   manager?: string;
   joiningDate?: string;
   salary?: number;
-  status?: "active" | "inactive" | "on-leave";
+  status?: "invited" | "active" | "inactive" | "on-leave";
+  authCreated?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -32,7 +34,9 @@ export interface AuthContextType {
   confirmResetPassword: (code: string, newPassword: string) => Promise<void>; // Updates to new password
 }
 
-
+/**
+ * Password strength evaluation metrics.
+ */
 export interface PasswordStrength {
   score: number; // 0 to 5
   label: "Very Weak" | "Weak" | "Fair" | "Good" | "Strong";

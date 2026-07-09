@@ -7,14 +7,17 @@ import {
     setPersistence,
     browserLocalPersistence,
     browserSessionPersistence,
+    createUserWithEmailAndPassword,
     User as FirebaseUser,
 } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "@/firebase/config";
 import type { User } from "@/types/auth";
 import type { UserRole } from "@/types/navigation";
+import { userService } from "./user.service";
 
-export function handleAuthError(error: any): string {
-    const code = error?.code || "";
+// ─── Firebase Error Parser ──────────────────────────────────────────────────
+export function handleAuthError(error: unknown): string {
+    const code = (error as { code?: string })?.code || "";
     console.error("Auth error occurred:", error);
 
     switch (code) {
@@ -37,7 +40,7 @@ export function handleAuthError(error: any): string {
         case "auth/weak-password":
             return "The password is too weak. Please choose a stronger password.";
         default:
-            return error?.message || "An unexpected error occurred. Please try again.";
+            return (error as { message?: string })?.message || "An unexpected error occurred. Please try again.";
     }
 }
 
@@ -50,6 +53,7 @@ function determineRole(email: string | null): UserRole {
     return "employee";
 }
 
+// ─── Map Firebase User → HRMS User ──────────────────────────────────────────
 function mapFirebaseUser(firebaseUser: FirebaseUser): User {
     return {
         uid: firebaseUser.uid,
@@ -61,6 +65,8 @@ function mapFirebaseUser(firebaseUser: FirebaseUser): User {
     };
 }
 
+// ─── Mock Session State ─────────────────────────────────────────────────────
+// Used only when isFirebaseConfigured is false. Matches Firebase local/session persistence.
 let mockUserChangeListener: ((user: User | null) => void) | null = null;
 let currentMockUser: User | null = null;
 
@@ -73,15 +79,24 @@ function getStoredMockUser(): User | null {
     return null;
 }
 
+// ─── Service Class Implementation ───────────────────────────────────────────
 class AuthService {
+    /**
+     * Check if Firebase is active
+     */
     public isFirebaseEnabled(): boolean {
         return isFirebaseConfigured && auth !== null;
     }
+
+    /**
+     * Authenticate a user with email and password
+     */
     public async login(email: string, password: string, rememberMe = false): Promise<User> {
         const normalizedEmail = email.trim();
 
         if (this.isFirebaseEnabled()) {
             try {
+                // Enforce persistence strategy based on "Remember Me"
                 await setPersistence(
                     auth!,
                     rememberMe ? browserLocalPersistence : browserSessionPersistence
@@ -92,7 +107,11 @@ class AuthService {
                 throw new Error(handleAuthError(error));
             }
         } else {
+            // Simulate API call
             await new Promise((resolve) => setTimeout(resolve, 800));
+
+            // Preset Mock Accounts Validation
+            // Any other email compiles fine, but these are our predefined test accounts
             const isTestAdmin = normalizedEmail === "admin@company.com" && password === "Admin@123!";
             const isTestEmployee = normalizedEmail === "employee@company.com" && password === "Employee@123!";
             const isGenericValid = normalizedEmail.endsWith("@company.com") && password.length >= 8;
@@ -106,9 +125,9 @@ class AuthService {
 
             const user: User = {
                 uid: `mock-uid-${role}-${Date.now()}`,
-                name: displayName,
                 email: normalizedEmail,
                 displayName,
+                name: displayName,
                 photoURL: null,
                 role,
             };
@@ -129,6 +148,7 @@ class AuthService {
             return user;
         }
     }
+
     public async logout(): Promise<void> {
         if (this.isFirebaseEnabled()) {
             try {
@@ -149,6 +169,9 @@ class AuthService {
         }
     }
 
+    /**
+     * Dispatch password reset email
+     */
     public async sendResetLink(email: string): Promise<void> {
         const normalizedEmail = email.trim();
 
@@ -167,6 +190,9 @@ class AuthService {
         }
     }
 
+    /**
+     * Reset password with action code
+     */
     public async resetPassword(code: string, newPassword: string): Promise<void> {
         if (this.isFirebaseEnabled()) {
             try {
@@ -182,6 +208,9 @@ class AuthService {
         }
     }
 
+    /**
+     * Subscribe to authentication status updates
+     */
     public subscribeToAuthChanges(callback: (user: User | null) => void): () => void {
         if (this.isFirebaseEnabled()) {
             return onAuthStateChanged(auth!, (firebaseUser) => {
@@ -192,12 +221,12 @@ class AuthService {
                 }
             });
         } else {
-            // Mock 
+            // Mock subscription loop
             mockUserChangeListener = callback;
             const initialUser = getStoredMockUser();
             currentMockUser = initialUser;
 
-            // Delay
+            // Delay callback slightly to simulate async Firebase check
             const timer = setTimeout(() => {
                 callback(currentMockUser);
             }, 500);
@@ -206,6 +235,46 @@ class AuthService {
                 clearTimeout(timer);
                 mockUserChangeListener = null;
             };
+        }
+    }
+
+    /**
+     * Find invited employee details by email
+     */
+    public async findEmployeeByEmail(email: string): Promise<User | null> {
+        return await userService.findUserByEmail(email);
+    }
+
+    /**
+     * Activate employee account
+     * 1. Creates authentication credentials
+     * 2. Links Auth UID to the employee's profile document
+     * 3. Logs out the newly created automatic user session
+     */
+    public async activateEmployeeAccount(
+        email: string,
+        password: string,
+        employeeId: string
+    ): Promise<void> {
+        if (this.isFirebaseEnabled()) {
+            try {
+                const credential = await createUserWithEmailAndPassword(auth!, email, password);
+                const uid = credential.user.uid;
+
+                // Update Firestore profile
+                await userService.linkAuthAccount(employeeId, uid);
+
+                // Sign out the new session immediately
+                await signOut(auth!);
+            } catch (error) {
+                throw new Error(handleAuthError(error));
+            }
+        } else {
+            // Offline fallback: simulate delay
+            await new Promise((resolve) => setTimeout(resolve, 800));
+
+            const mockUid = `mock-uid-activated-${Date.now()}`;
+            await userService.linkAuthAccount(employeeId, mockUid);
         }
     }
 }

@@ -1,8 +1,17 @@
 import type { UserRole } from "./navigation";
 
+export enum EmployeeStatus {
+  INVITED = "invited",
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+}
+
+/**
+ * Strong TypeScript definitions for Employee model
+ */
 export interface Employee {
-  /** Unique user authentication identifier */
-  uid: string;
+  /** Unique user authentication identifier (null until activated) */
+  uid: string | null;
   /** Custom organization employee ID (e.g. EMP-ENG-1024) */
   employeeId: string;
   /** Full name of the employee */
@@ -28,7 +37,11 @@ export interface Employee {
   /** Annual or monthly salary in numerical form */
   salary: number;
   /** Employment active status */
-  status: "active" | "inactive" | "on-leave";
+  status: "invited" | "active" | "inactive" | "on-leave";
+  /** Indicates if the user account has been activated in Firebase Auth */
+  authCreated: boolean;
+  /** Timestamp when account was activated */
+  activatedAt?: string;
   /** Optional profile photo URL */
   photoURL?: string | null;
   /** Profile creation timestamp */

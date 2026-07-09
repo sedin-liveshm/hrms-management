@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface EmployeeStatusBadgeProps {
-    status: "active" | "inactive" | "on-leave";
+    status: "invited" | "active" | "inactive" | "on-leave";
     className?: string;
 }
 
@@ -10,12 +10,14 @@ export function EmployeeStatusBadge({ status, className }: EmployeeStatusBadgePr
     const labelMap = {
         "active": "Active",
         "inactive": "Inactive",
+        "invited": "Invited",
         "on-leave": "On Leave",
     };
 
     const styleMap = {
         "active": "bg-primary/10 text-primary hover:bg-primary/20 border-0",
         "inactive": "bg-destructive/10 text-destructive hover:bg-destructive/20 border-0",
+        "invited": "bg-muted text-muted-foreground hover:bg-muted/80 border-0",
         "on-leave": "bg-amber-100 text-amber-700 hover:bg-amber-200 border-0",
     };
 

@@ -54,7 +54,7 @@ export default function EmployeesPage() {
   const handleFormSubmit = async (data: EmployeeFormValues) => {
     if (editingEmployee) {
       // Edit mode
-      await editEmployee(editingEmployee.uid, data);
+      await editEmployee(editingEmployee.uid!, data);
     } else {
       // Add mode
       await addEmployee(data);
@@ -109,7 +109,7 @@ export default function EmployeesPage() {
             >
               <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
-
+            
             {/* RoleGuard: Only Admin and HR can add employees */}
             <RoleGuard roles={["admin", "hr"]}>
               <Button size="sm" onClick={handleOpenAddModal} className="gap-1.5 h-9 rounded-xl cursor-pointer bg-primary hover:bg-primary/95 text-primary-foreground font-semibold">

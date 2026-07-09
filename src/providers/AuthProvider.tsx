@@ -17,19 +17,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loading = useAuthStore((state) => state.loading);
 
   useEffect(() => {
+    // 1. Subscribe to Auth status changes from Firebase or Mock
     const unsubscribe = authService.subscribeToAuthChanges(async (authUser) => {
       if (authUser) {
         try {
-          // 2. Fetch full Firestore profile for user
-          let fullProfile = await userService.getUserByUid(authUser.uid);
+          const fullProfile = await userService.getUserByUid(authUser.uid);
           
-          if (!fullProfile) {
-            // Seed profile if not found
-            fullProfile = await userService.createUser(authUser.uid, {
-              email: authUser.email || "",
-              name: authUser.displayName || authUser.email?.split("@")[0] || "User",
-              role: authUser.role,
-            });
+          if (!fullProfile || fullProfile.status === "inactive" || fullProfile.status === "invited") {
+            await authService.logout();
+            clearUser();
+            return;
           }
           
           setUser(fullProfile);

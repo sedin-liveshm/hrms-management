@@ -50,15 +50,21 @@ export const useAuthStore = create<AuthState>((set) => ({
       const authUser = await authService.login(email, password, rememberMe);
       
       // 2. Fetch detailed profile from Firestore (or mock db)
-      let fullProfile = await userService.getUserByUid(authUser.uid);
+      const fullProfile = await userService.getUserByUid(authUser.uid);
       
       if (!fullProfile) {
-        // Automatically create a default profile record if one doesn't exist yet
-        fullProfile = await userService.createUser(authUser.uid, {
-          email: authUser.email || email,
-          name: authUser.displayName || email.split("@")[0],
-          role: authUser.role,
-        });
+        await authService.logout();
+        throw new Error("Employee profile not found. Contact HR.");
+      }
+      
+      if (fullProfile.status === "inactive") {
+        await authService.logout();
+        throw new Error("This account has been disabled. Contact HR.");
+      }
+      
+      if (fullProfile.status === "invited") {
+        await authService.logout();
+        throw new Error("Account is not activated. Please activate your account first.");
       }
       
       set({
