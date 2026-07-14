@@ -1,3 +1,21 @@
+/**
+ * Navigation Config — src/config/navigation.ts
+ *
+ * WHY THIS EXISTS:
+ * Configuration-driven navigation is an enterprise pattern that decouples
+ * the navigation structure from rendering logic. To add, remove, or reorder
+ * nav items, you ONLY edit this file. Zero component changes needed.
+ *
+ * DESIGN DECISIONS:
+ * - Icons imported from lucide-react as component references (not JSX)
+ * - Every item has a `roles` array for RBAC filtering at render time
+ * - `id` fields use kebab-case constants — no magic strings in components
+ * - Groups map 1:1 to Icon Rail entries
+ * - Items within each group populate the middle Navigation Panel
+ *
+ * SOLID: Open/Closed — new nav entries added here, no existing code changes.
+ * DRY: One config file drives both the icon rail and the nav panel.
+ */
 
 import {
     LayoutDashboard,
@@ -24,7 +42,6 @@ import {
 } from "lucide-react";
 
 import type { NavigationConfig, NavigationGroup } from "@/types/navigation";
-
 export const NAV_GROUP_IDS = {
     HOME: "home",
     ME: "me",
@@ -34,11 +51,10 @@ export const NAV_GROUP_IDS = {
     SETTINGS: "settings",
 } as const;
 
-
 export type NavGroupId = (typeof NAV_GROUP_IDS)[keyof typeof NAV_GROUP_IDS];
 
 export const navigationConfig: NavigationConfig = [
-    // Home Group
+    // ── Home Group
     {
         id: NAV_GROUP_IDS.HOME,
         label: "Home",
@@ -69,8 +85,7 @@ export const navigationConfig: NavigationConfig = [
         ],
     },
 
-    // Me Group 
-    // Personal section — the logged-in user's own data
+    // ── Me Group 
     {
         id: NAV_GROUP_IDS.ME,
         label: "Me",
@@ -122,8 +137,7 @@ export const navigationConfig: NavigationConfig = [
         ],
     },
 
-    // Team Group
-    // Managerial section — visible to managers, HR, and admin
+    // ── Team Group
     {
         id: NAV_GROUP_IDS.TEAM,
         label: "Team",
@@ -161,13 +175,20 @@ export const navigationConfig: NavigationConfig = [
         ],
     },
 
-    // Organization Group
+    // ── Organization Group
     {
         id: NAV_GROUP_IDS.ORGANIZATION,
         label: "Organization",
         icon: Building2,
-        roles: ["admin", "hr"],
+        roles: ["admin", "hr", "manager", "employee"],
         items: [
+            {
+                id: "structure",
+                label: "Org Structure",
+                href: "/organization",
+                icon: Building2,
+                roles: ["admin", "hr", "manager", "employee"],
+            },
             {
                 id: "departments",
                 label: "Departments",
@@ -192,7 +213,7 @@ export const navigationConfig: NavigationConfig = [
         ],
     },
 
-    // Finance Group
+    // ── Finance Grou
     {
         id: NAV_GROUP_IDS.FINANCE,
         label: "Finance",
@@ -216,7 +237,7 @@ export const navigationConfig: NavigationConfig = [
         ],
     },
 
-    // Settings Group
+    // ── Settings Group 
     {
         id: NAV_GROUP_IDS.SETTINGS,
         label: "Settings",
@@ -248,14 +269,7 @@ export const navigationConfig: NavigationConfig = [
     },
 ];
 
-//Helper Functions
-/**
- * Filters the navigation config to only include groups and items
- * that the given role is authorized to see.
- *
- * WHY: Keeps RBAC logic out of components. Components call this helper
- * and render whatever they receive — no role-checking inside JSX.
- */
+// ─── Helper Functions 
 export function getFilteredNavigation(
     config: NavigationConfig,
     role: string
@@ -267,20 +281,12 @@ export function getFilteredNavigation(
             items: group.items.filter((item) => item.roles.includes(role as never)),
         }));
 }
-
-/**
- * Returns a single group by id, or undefined if not found.
- */
 export function getNavigationGroup(
     config: NavigationConfig,
     groupId: string
 ): NavigationGroup | undefined {
     return config.find((group) => group.id === groupId);
 }
-
-/**
- * Returns the default active group id (first group in the config).
- */
 export function getDefaultGroupId(config: NavigationConfig): string {
     return config[0]?.id ?? NAV_GROUP_IDS.HOME;
 }

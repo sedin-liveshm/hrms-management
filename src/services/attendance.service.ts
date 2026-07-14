@@ -245,6 +245,9 @@ class AttendanceService {
                 // Employee ID / User UID filter
                 if (filters.employeeId && rec.uid !== filters.employeeId) return false;
 
+                // Multiple employee IDs filter (e.g. for team views)
+                if (filters.employeeIds && !filters.employeeIds.includes(rec.uid)) return false;
+
                 // Status filter
                 if (filters.status && rec.status !== filters.status) return false;
 

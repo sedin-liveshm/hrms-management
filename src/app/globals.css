@@ -78,150 +78,219 @@
    ▶ TO RETHEME: Change hex values here only.
    ▶ All components automatically inherit these changes.
    ────────────────────────────────────────────────────────────── */
+
 :root {
+
   /* Surfaces */
-  --background: #f6f0ef;        /* Page background — warm off-white */
-  --foreground: #3a2d2c;        /* Primary text — deep brown */
+  --background: #fbf7ea;       
+  --foreground: #260d10;
 
-  /* Cards & Popovers */
-  --card: #ffffff;              /* Card surface — pure white */
-  --card-foreground: #3a2d2c;
 
+  /* Cards */
+  --card: #ffffff;
+  --card-foreground: #260d10;
+
+
+  /* Popover */
   --popover: #ffffff;
-  --popover-foreground: #3a2d2c;
+  --popover-foreground: #260d10;
 
-  /* Brand Colors */
-  --primary: #46b952;           /* Primary action — mint green */
-  --primary-foreground: #ffffff;
 
-  --secondary: #946b79;         /* Secondary accent — muted rose */
+
+  /* Brand */
+  --primary: #d5aa2a;
+  --primary-foreground: #1e1806;
+
+
+
+  --secondary: #52ad8d;
   --secondary-foreground: #ffffff;
 
-  /* Muted / Subtle */
-  --muted: #ece1df;             /* Subtle backgrounds */
-  --muted-foreground: #91716e;  /* Secondary text */
+
+
+  /* Muted */
+  --muted: #f7eed4;
+  --muted-foreground: #806619;
+
+
 
   /* Accent */
-  --accent: #bfa6ae;
-  --accent-foreground: #3a2d2c;
+  --accent: #e7cf18;
+  --accent-foreground: #201d03;
 
-  /* Semantic */
-  --destructive: #ba4576;       /* Danger / delete */
 
-  /* Borders & Inputs */
-  --border: #dac3be;            /* Component borders */
-  --input: #dac3be;             /* Input borders */
-  --ring: #46b952;              /* Focus ring — matches primary */
 
-  /* Border Radius — change once to retheme all rounded corners */
+  /* Delete / Error */
+  --destructive: #be4152;
+
+
+
+  /* Inputs */
+  --border: #eeddaa;
+  --input: #eeddaa;
+
+
+  --ring: #e7cf18;
+
+
+
   --radius: 0.75rem;
 
-  /* Chart Colors */
-  --chart-1: #46b952;
-  --chart-2: #946b79;
-  --chart-3: #ba4576;
-  --chart-4: #a2695d;
-  --chart-5: #91716e;
 
-  /* ─── Sidebar ─────────────────────────────────────────────────
-     The sidebar uses its own token set so it can have a dark
-     background while the main content stays light.
-     ──────────────────────────────────────────────────────────── */
-  --sidebar: #3a2d2c;                   /* Sidebar background — dark brown */
-  --sidebar-foreground: #ffffff;        /* Sidebar text */
-  --sidebar-primary: #46b952;           /* Active item background */
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #574442;            /* Hover state */
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #574442;
-  --sidebar-ring: #46b952;
+
+  /* Charts */
+
+  --chart-1: #d5aa2a;   /* bronze */
+  --chart-2: #52ad8d;   /* aqua */
+  --chart-3: #9ee619;   /* lime */
+  --chart-4: #e7cf18;   /* gold */
+  --chart-5: #be4152;   /* rose */
+
+
+
+  /* Sidebar */
+
+  --sidebar: #260d10;
+
+  --sidebar-foreground: #f7eed4;
+
+
+  --sidebar-primary: #d5aa2a;
+
+  --sidebar-primary-foreground: #1e1806;
+
+
+
+  --sidebar-accent: #4c1a21;
+
+  --sidebar-accent-foreground: #f5eca3;
+
+
+
+  --sidebar-border: #4c1a21;
+
+
+  --sidebar-ring: #e7cf18;
+
 }
 
-/* ─── HRMS Dark Theme ────────────────────────────────────────────
-   Dark mode variant — same token names, darker values.
-   ────────────────────────────────────────────────────────────── */
+
+
+
+
+
+
+/* ─── HRMS Dark Theme ───────────────────────────── */
+
+
 .dark {
-  --background: #1d1716;
-  --foreground: #f4f1f0;
 
-  --card: #3a2d2c;
-  --card-foreground: #ffffff;
 
-  --popover: #3a2d2c;
-  --popover-foreground: #ffffff;
+  --background: #1b090b;
 
-  --primary: #46b952;
-  --primary-foreground: #ffffff;
+  --foreground: #fbf7ea;
 
-  --secondary: #946b79;
-  --secondary-foreground: #ffffff;
 
-  --muted: #574442;
-  --muted-foreground: #d3c6c5;
 
-  --accent: #574442;
-  --accent-foreground: #ffffff;
+  --card: #260d10;
 
-  --destructive: #c86a91;
+  --card-foreground: #fbf7ea;
 
-  --border: #574442;
-  --input: #574442;
-  --ring: #46b952;
 
-  --chart-1: #46b952;
-  --chart-2: #946b79;
-  --chart-3: #ba4576;
-  --chart-4: #a2695d;
-  --chart-5: #91716e;
 
-  --sidebar: #150f11;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #46b952;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #3a2d2c;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #574442;
-  --sidebar-ring: #46b952;
-}
+  --popover: #260d10;
 
-/* ─── Base Layer ─────────────────────────────────────────────── */
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
+  --popover-foreground: #fbf7ea;
 
-  body {
-    @apply bg-background text-foreground;
-  }
 
-  html {
-    @apply font-sans;
-    /* Smooth scrolling for all anchor navigation */
-    scroll-behavior: smooth;
-  }
 
-  /* Typography scale */
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
-  }
 
-  /* Custom scrollbar — subtle, matches the theme */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
+  --primary: #d5aa2a;
 
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  --primary-foreground: #1e1806;
 
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
-  }
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/40;
-  }
+
+
+  --secondary: #316855;
+
+  --secondary-foreground: #eef7f4;
+
+
+
+
+  --muted: #4c1a21;
+
+  --muted-foreground: #e6cc7f;
+
+
+
+
+  --accent: #5c530a;
+
+  --accent-foreground: #fdfae8;
+
+
+
+
+  --destructive: #cb6774;
+
+
+
+
+  --border: #4c1a21;
+
+  --input: #4c1a21;
+
+
+  --ring: #e7cf18;
+
+
+
+
+  --chart-1: #d5aa2a;
+
+  --chart-2: #52ad8d;
+
+  --chart-3: #9ee619;
+
+  --chart-4: #e7cf18;
+
+  --chart-5: #cb6774;
+
+
+
+
+  /* Sidebar */
+
+  --sidebar: #0b0506;
+
+
+  --sidebar-foreground: #fbf7ea;
+
+
+
+  --sidebar-primary: #d5aa2a;
+
+
+  --sidebar-primary-foreground: #1e1806;
+
+
+
+
+  --sidebar-accent: #260d10;
+
+
+  --sidebar-accent-foreground: #ecd846;
+
+
+
+
+  --sidebar-border: #4c1a21;
+
+
+  --sidebar-ring: #e7cf18;
+
 }
 
 /* ─── Utility Classes ────────────────────────────────────────── */

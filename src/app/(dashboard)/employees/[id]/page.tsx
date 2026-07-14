@@ -7,6 +7,7 @@ import { PageContainer, PageHeader, ErrorState } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { EmployeeDetails } from "@/components/employee/EmployeeDetails";
 import { employeeService } from "@/services/employee.service";
+import { useAuth } from "@/hooks/useAuth";
 import type { Employee } from "@/types/employee";
 
 interface EmployeeDetailsPageProps {
@@ -18,18 +19,30 @@ export default function EmployeeDetailsPage({
 }: EmployeeDetailsPageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const { user, role } = useAuth();
   
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchEmployee = async () => {
+    if (!user || !role) return;
     setLoading(true);
     setError(null);
     try {
       const data = await employeeService.getEmployeeById(id);
       if (!data) {
         setError("Employee profile not found in database.");
+        return;
+      }
+
+      // Security check: admin, hr, self, or direct manager
+      const isSelf = data.uid === user.uid || data.employeeId === user.employeeId;
+      const isManagerOf = data.managerId ? (data.managerId === user.employeeId || data.managerId === user.uid) : false;
+      const hasAccess = role === "admin" || role === "hr" || isSelf || isManagerOf;
+
+      if (!hasAccess) {
+        setError("Access Denied");
       } else {
         setEmployee(data);
       }
@@ -42,8 +55,10 @@ export default function EmployeeDetailsPage({
   };
 
   useEffect(() => {
-    fetchEmployee();
-  }, [id]);
+    if (user) {
+      fetchEmployee();
+    }
+  }, [id, user]);
 
   return (
     <PageContainer>

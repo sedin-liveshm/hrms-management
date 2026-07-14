@@ -1,5 +1,8 @@
 import { Timestamp } from "firebase/firestore";
 
+/**
+ * Valid Leave Types in the HRMS System
+ */
 export type LeaveType =
   | "casual"
   | "sick"
@@ -88,6 +91,7 @@ export interface LeaveFilters {
   leaveType?: LeaveType | "";
   department?: string;
   employeeId?: string;
+  employeeIds?: string[];
   status?: LeaveStatus | "";
   search?: string; // Search by employee name
 }

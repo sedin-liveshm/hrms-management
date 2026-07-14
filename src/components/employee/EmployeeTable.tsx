@@ -92,6 +92,15 @@ export function EmployeeTable({
       ),
     },
     {
+      key: "managerName",
+      label: "Manager",
+      renderCell: (row) => (
+        <span className="text-sm text-foreground/80 font-medium">
+          {row.managerName || row.manager || "—"}
+        </span>
+      ),
+    },
+    {
       key: "status",
       label: "Status",
       width: "110px",

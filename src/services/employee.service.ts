@@ -222,6 +222,71 @@ class EmployeeService {
   }
 
   /**
+   * Return employees where role == "manager"
+   */
+  public async getManagers(): Promise<Employee[]> {
+    if (this.isFirebaseEnabled()) {
+      try {
+        const q = query(collection(db!, "users"), where("role", "==", "manager"));
+        const querySnapshot = await getDocs(q);
+        const list: Employee[] = [];
+        querySnapshot.forEach((d) => {
+          const data = d.data();
+          list.push({ uid: data.uid || d.id, ...data } as Employee);
+        });
+        return list;
+      } catch (error) {
+        console.error("Firestore getManagers failed:", error);
+        throw error;
+      }
+    } else {
+      const all = await this.getAllEmployees();
+      return all.filter((emp) => emp.role === "manager");
+    }
+  }
+
+  /**
+   * Return employees managed by the given managerId
+   */
+  public async getEmployeesByManager(managerId: string): Promise<Employee[]> {
+    if (this.isFirebaseEnabled()) {
+      try {
+        const q = query(
+          collection(db!, "users"),
+          where("managerId", "==", managerId)
+        );
+        const querySnapshot = await getDocs(q);
+        const list: Employee[] = [];
+        querySnapshot.forEach((d) => {
+          const data = d.data();
+          list.push({ uid: data.uid || d.id, ...data } as Employee);
+        });
+        return list;
+      } catch (error) {
+        console.error("Firestore getEmployeesByManager failed:", error);
+        throw error;
+      }
+    } else {
+      const all = await this.getAllEmployees();
+      return all.filter((emp) => emp.managerId === managerId);
+    }
+  }
+
+  /**
+   * Updates an employee's direct manager details
+   */
+  public async updateEmployeeManager(
+    employeeId: string,
+    manager: { managerId: string | null; managerName: string | null }
+  ): Promise<void> {
+    return this.updateEmployee(employeeId, {
+      managerId: manager.managerId,
+      managerName: manager.managerName,
+      manager: manager.managerName || "", // Sync legacy manager text field
+    });
+  }
+
+  /**
    * Helper to pre-seed localStorage with diverse employees for demo/mock mode
    */
   private ensureMockDataSeeded() {

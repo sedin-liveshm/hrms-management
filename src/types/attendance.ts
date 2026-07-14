@@ -1,3 +1,14 @@
+/**
+ * Attendance Types — src/types/attendance.ts
+ *
+ * WHY THIS EXISTS:
+ * Defines type contracts for the Attendance module. Ensures consistent mapping
+ * of attendance status enums, record structures, filters, and statistics across
+ * the UI, hooks, and services.
+ *
+ * SOLID: Interface Segregation — separated filter, record, and summary types.
+ */
+
 export enum AttendanceStatus {
   PRESENT = "Present",
   ABSENT = "Absent",
@@ -6,7 +17,6 @@ export enum AttendanceStatus {
   WORK_FROM_HOME = "Work From Home",
   LEAVE = "Leave",
 }
-
 
 export interface AttendanceRecord {
   /** Composite key: YYYY-MM-DD_uid */
@@ -49,6 +59,7 @@ export interface AttendanceFilters {
   startDate?: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
   employeeId?: string; // Search/filter by employee uid or id
+  employeeIds?: string[];
   status?: AttendanceStatus | "";
   department?: string;
   search?: string; // Free text search for employee name

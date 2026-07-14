@@ -32,6 +32,8 @@ export interface Employee {
   role: UserRole;
   /** UID or name of direct line manager */
   manager?: string;
+  managerId?: string | null;
+  managerName?: string | null;
   /** Join date in YYYY-MM-DD format */
   joiningDate: string;
   /** Annual or monthly salary in numerical form */

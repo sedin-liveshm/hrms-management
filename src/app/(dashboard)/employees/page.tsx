@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useAuth } from "@/hooks/useAuth";
 import { EmployeeFilters } from "@/components/employee/EmployeeFilters";
 import { EmployeeTable } from "@/components/employee/EmployeeTable";
 import { EmployeeCard } from "@/components/employee/EmployeeCard";
@@ -29,6 +30,7 @@ export default function EmployeesPage() {
     editEmployee,
     removeEmployee,
   } = useEmployees();
+  const { role } = useAuth();
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,8 +97,8 @@ export default function EmployeesPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Employees"
-        subtitle="Manage and view your organization's workforce"
+        title={role === "manager" ? "Team Members" : "Employees"}
+        subtitle={role === "manager" ? "View and manage your direct reports" : "Manage and view your organization's workforce"}
         action={
           <div className="flex items-center gap-2">
             <Button
@@ -129,8 +131,8 @@ export default function EmployeesPage() {
         />
       ) : (
         <SectionCard
-          title="All Employees"
-          description={`${filteredEmployees.length} profiles matching filters`}
+          title={role === "manager" ? "My Team" : "All Employees"}
+          description={role === "manager" ? `${filteredEmployees.length} team members matching filters` : `${filteredEmployees.length} profiles matching filters`}
           noPadding
           action={
             <Badge className="bg-primary/10 text-primary border-0 rounded-md font-semibold select-none">

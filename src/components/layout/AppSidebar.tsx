@@ -195,7 +195,7 @@ function InnerSidebar({ role }: InnerSidebarProps) {
             {/* Content*/}
             <SidebarContent className="flex flex-row gap-0 p-0">
                 {/* Icon Rail (always visible)*/}
-                <div className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-sidebar-border py-3">
+                <div className="flex w-18 shrink-0 flex-col items-center gap-1 border-r border-sidebar-border py-3">
                     {filteredConfig.map((group) => (
                         <IconRailItem
                             key={group.id}

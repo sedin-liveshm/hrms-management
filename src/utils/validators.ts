@@ -73,11 +73,24 @@ export const employeeSchema = z.object({
   designation: z.string().min(1, "Designation is required"),
   role: z.enum(["admin", "hr", "manager", "employee"] as const),
   manager: z.string().optional().or(z.literal("")),
+  managerId: z.string().nullable().optional().or(z.literal("")),
+  managerName: z.string().nullable().optional().or(z.literal("")),
   joiningDate: z.string().min(1, "Joining date is required"),
   salary: z.coerce.number().min(0, "Salary must be a positive number"),
   status: z.enum(["invited", "active", "inactive", "on-leave"] as const),
   photoURL: z.string().url("Please enter a valid image URL").optional().or(z.literal("")).or(z.null()),
-});
+}).refine(
+  (data) => {
+    if (data.role === "employee") {
+      return !!data.managerId;
+    }
+    return true;
+  },
+  {
+    message: "Reporting Manager is required for standard employees",
+    path: ["managerId"],
+  }
+);
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
@@ -85,8 +98,8 @@ export type EmployeeFormValues = z.infer<typeof employeeSchema>;
  * Announcement validation schema for adding and editing announcements
  */
 export const announcementSchema = z.object({
-  title: z.string(),
-  content: z.string()
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  content: z.string().min(10, "Content must be at least 10 characters"),
 });
 
 export type AnnouncementFormValues = z.infer<typeof announcementSchema>;

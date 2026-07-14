@@ -20,9 +20,13 @@ import type {
 import { differenceInCalendarDays } from "date-fns";
 
 class LeaveService {
+    /**
+     * Checks if Firestore is active and initialized.
+     */
     private isFirebaseEnabled(): boolean {
         return isFirebaseConfigured && db !== null;
     }
+
     /**
      * Date string helper YYYY-MM-DD
      */
@@ -32,6 +36,7 @@ class LeaveService {
         const d = String(date.getDate()).padStart(2, "0");
         return `${y}-${m}-${d}`;
     }
+
     /**
      * Convert Firestore Timestamp or serialized representation to JS Date
      */
@@ -45,6 +50,7 @@ class LeaveService {
         if (typeof (ts as any).seconds === "number") return new Date((ts as any).seconds * 1000);
         return new Date(ts as any);
     }
+
     /**
      * Helper to construct a standard Timestamp structure
      */
@@ -62,6 +68,7 @@ class LeaveService {
             } as any;
         }
     }
+
     /**
      * Expose a helper to calculate total working days (excluding weekends)
      */
@@ -83,6 +90,9 @@ class LeaveService {
             }
             curDate.setDate(curDate.getDate() + 1);
         }
+
+        // Return at least 1 day if start and end fall on a weekend, to avoid 0 days.
+        // However, usually we encourage applying only on weekdays.
         return count > 0 ? count : differenceInCalendarDays(end, start) + 1;
     }
 
@@ -342,7 +352,7 @@ class LeaveService {
             }
         } else {
             if (typeof window === "undefined") return [];
-            // this.ensureMockDataSeeded();
+            this.ensureMockDataSeeded();
 
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
@@ -364,6 +374,9 @@ class LeaveService {
             .filter((l) => {
                 // Employee ID / User UID filter
                 if (filters.employeeId && l.uid !== filters.employeeId) return false;
+
+                // Multiple employee IDs filter (e.g. for team views)
+                if (filters.employeeIds && !filters.employeeIds.includes(l.uid)) return false;
 
                 // Leave Type filter
                 if (filters.leaveType && l.leaveType !== filters.leaveType) return false;
@@ -500,180 +513,180 @@ class LeaveService {
     /**
      * Pre-seeds local storage mock database with realistic leave requests
      */
-    // private ensureMockDataSeeded() {
-    //     if (typeof window === "undefined") return;
+    private ensureMockDataSeeded() {
+        if (typeof window === "undefined") return;
 
-    //     let hasLeaves = false;
-    //     for (let i = 0; i < localStorage.length; i++) {
-    //         const key = localStorage.key(i);
-    //         if (key && key.startsWith("hrms_leave_")) {
-    //             hasLeaves = true;
-    //             break;
-    //         }
-    //     }
+        let hasLeaves = false;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("hrms_leave_")) {
+                hasLeaves = true;
+                break;
+            }
+        }
 
-    //     if (!hasLeaves) {
-    //         console.log("Seeding mock leaves into localStorage...");
+        if (!hasLeaves) {
+            console.log("Seeding mock leaves into localStorage...");
 
-    //         const createMockLeave = (
-    //             id: string,
-    //             uid: string,
-    //             empId: string,
-    //             name: string,
-    //             email: string,
-    //             dept: string,
-    //             desig: string,
-    //             leaveType: LeaveType,
-    //             start: Date,
-    //             end: Date,
-    //             totalDays: number,
-    //             halfDay: boolean,
-    //             reason: string,
-    //             status: LeaveStatus,
-    //             managerId: string = "mock-uid-manager",
-    //             managerName: string = "Project Manager",
-    //             rejectReason?: string
-    //         ): LeaveRequest => {
-    //             const approvedBy = status === "approved" || status === "rejected" ? managerId : undefined;
-    //             const approvedByName = status === "approved" || status === "rejected" ? managerName : undefined;
-    //             const approvedAt = status === "approved" || status === "rejected"
-    //                 ? this.createTimestamp(new Date(start.getTime() - 86400000))
-    //                 : undefined;
+            const createMockLeave = (
+                id: string,
+                uid: string,
+                empId: string,
+                name: string,
+                email: string,
+                dept: string,
+                desig: string,
+                leaveType: LeaveType,
+                start: Date,
+                end: Date,
+                totalDays: number,
+                halfDay: boolean,
+                reason: string,
+                status: LeaveStatus,
+                managerId: string = "mock-uid-manager",
+                managerName: string = "Project Manager",
+                rejectReason?: string
+            ): LeaveRequest => {
+                const approvedBy = status === "approved" || status === "rejected" ? managerId : undefined;
+                const approvedByName = status === "approved" || status === "rejected" ? managerName : undefined;
+                const approvedAt = status === "approved" || status === "rejected"
+                    ? this.createTimestamp(new Date(start.getTime() - 86400000))
+                    : undefined;
 
-    //             return {
-    //                 id,
-    //                 uid,
-    //                 employeeId: empId,
-    //                 employeeName: name,
-    //                 employeeEmail: email,
-    //                 department: dept,
-    //                 designation: desig,
-    //                 managerId,
-    //                 managerName,
-    //                 leaveType,
-    //                 startDate: this.createTimestamp(start),
-    //                 endDate: this.createTimestamp(end),
-    //                 totalDays,
-    //                 halfDay,
-    //                 reason,
-    //                 status,
-    //                 approvedBy,
-    //                 approvedByName,
-    //                 approvedAt,
-    //                 rejectionReason: rejectReason,
-    //                 createdAt: this.createTimestamp(new Date(start.getTime() - 86400000 * 3)),
-    //                 updatedAt: this.createTimestamp(new Date(start.getTime() - 86400000 * 2)),
-    //             };
-    //         };
+                return {
+                    id,
+                    uid,
+                    employeeId: empId,
+                    employeeName: name,
+                    employeeEmail: email,
+                    department: dept,
+                    designation: desig,
+                    managerId,
+                    managerName,
+                    leaveType,
+                    startDate: this.createTimestamp(start),
+                    endDate: this.createTimestamp(end),
+                    totalDays,
+                    halfDay,
+                    reason,
+                    status,
+                    approvedBy,
+                    approvedByName,
+                    approvedAt,
+                    rejectionReason: rejectReason,
+                    createdAt: this.createTimestamp(new Date(start.getTime() - 86400000 * 3)),
+                    updatedAt: this.createTimestamp(new Date(start.getTime() - 86400000 * 2)),
+                };
+            };
 
-    //         const mockLeaves = [
-    //             createMockLeave(
-    //                 "leave-1",
-    //                 "mock-uid-emp1",
-    //                 "EMP-EMPLOYEE-1004",
-    //                 "Ananya Krishnan",
-    //                 "ananya@company.com",
-    //                 "Engineering",
-    //                 "Software Engineer",
-    //                 "sick",
-    //                 new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    //                 new Date(new Date().getFullYear(), new Date().getMonth(), 2),
-    //                 2,
-    //                 false,
-    //                 "Fever and severe cold",
-    //                 "approved"
-    //             ),
-    //             createMockLeave(
-    //                 "leave-2",
-    //                 "mock-uid-emp1",
-    //                 "EMP-EMPLOYEE-1004",
-    //                 "Ananya Krishnan",
-    //                 "ananya@company.com",
-    //                 "Engineering",
-    //                 "Software Engineer",
-    //                 "earned",
-    //                 new Date(new Date().getFullYear(), new Date().getMonth(), 15),
-    //                 new Date(new Date().getFullYear(), new Date().getMonth(), 20),
-    //                 4, // Exclude weekends if any
-    //                 false,
-    //                 "Family function in hometown",
-    //                 "pending"
-    //             ),
-    //             createMockLeave(
-    //                 "leave-3",
-    //                 "mock-uid-emp1",
-    //                 "EMP-EMPLOYEE-1004",
-    //                 "Ananya Krishnan",
-    //                 "ananya@company.com",
-    //                 "Engineering",
-    //                 "Software Engineer",
-    //                 "casual",
-    //                 new Date(new Date().getFullYear(), new Date().getMonth() - 1, 12),
-    //                 new Date(new Date().getFullYear(), new Date().getMonth() - 1, 12),
-    //                 0.5,
-    //                 true,
-    //                 "Personal dental appointment",
-    //                 "approved"
-    //             ),
-    //             createMockLeave(
-    //                 "leave-4",
-    //                 "mock-uid-emp2",
-    //                 "EMP-EMPLOYEE-1005",
-    //                 "Rahul Sharma",
-    //                 "rahul@company.com",
-    //                 "Product",
-    //                 "Product Designer",
-    //                 "earned",
-    //                 new Date(new Date().getFullYear(), new Date().getMonth(), 10),
-    //                 new Date(new Date().getFullYear(), new Date().getMonth(), 12),
-    //                 3,
-    //                 false,
-    //                 "Visiting parents for anniversary",
-    //                 "approved"
-    //             ),
-    //             createMockLeave(
-    //                 "leave-5",
-    //                 "mock-uid-emp2",
-    //                 "EMP-EMPLOYEE-1005",
-    //                 "Rahul Sharma",
-    //                 "rahul@company.com",
-    //                 "Product",
-    //                 "Product Designer",
-    //                 "casual",
-    //                 new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5),
-    //                 new Date(new Date().getFullYear(), new Date().getMonth() + 1, 6),
-    //                 2,
-    //                 false,
-    //                 "Attending close friend's wedding",
-    //                 "pending"
-    //             ),
-    //             createMockLeave(
-    //                 "leave-6",
-    //                 "mock-uid-emp2",
-    //                 "EMP-EMPLOYEE-1005",
-    //                 "Rahul Sharma",
-    //                 "rahul@company.com",
-    //                 "Product",
-    //                 "Product Designer",
-    //                 "sick",
-    //                 new Date(new Date().getFullYear(), new Date().getMonth() - 1, 20),
-    //                 new Date(new Date().getFullYear(), new Date().getMonth() - 1, 22),
-    //                 3,
-    //                 false,
-    //                 "Viral infection recovery",
-    //                 "rejected",
-    //                 "mock-uid-manager",
-    //                 "Project Manager",
-    //                 "Applied after dates without notice. Please submit medical documentation to HR."
-    //             ),
-    //         ];
+            const mockLeaves = [
+                createMockLeave(
+                    "leave-1",
+                    "mock-uid-emp1",
+                    "EMP-EMPLOYEE-1004",
+                    "Ananya Krishnan",
+                    "ananya@company.com",
+                    "Engineering",
+                    "Software Engineer",
+                    "sick",
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 2),
+                    2,
+                    false,
+                    "Fever and severe cold",
+                    "approved"
+                ),
+                createMockLeave(
+                    "leave-2",
+                    "mock-uid-emp1",
+                    "EMP-EMPLOYEE-1004",
+                    "Ananya Krishnan",
+                    "ananya@company.com",
+                    "Engineering",
+                    "Software Engineer",
+                    "earned",
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 15),
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 20),
+                    4, // Exclude weekends if any
+                    false,
+                    "Family function in hometown",
+                    "pending"
+                ),
+                createMockLeave(
+                    "leave-3",
+                    "mock-uid-emp1",
+                    "EMP-EMPLOYEE-1004",
+                    "Ananya Krishnan",
+                    "ananya@company.com",
+                    "Engineering",
+                    "Software Engineer",
+                    "casual",
+                    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 12),
+                    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 12),
+                    0.5,
+                    true,
+                    "Personal dental appointment",
+                    "approved"
+                ),
+                createMockLeave(
+                    "leave-4",
+                    "mock-uid-emp2",
+                    "EMP-EMPLOYEE-1005",
+                    "Rahul Sharma",
+                    "rahul@company.com",
+                    "Product",
+                    "Product Designer",
+                    "earned",
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 10),
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 12),
+                    3,
+                    false,
+                    "Visiting parents for anniversary",
+                    "approved"
+                ),
+                createMockLeave(
+                    "leave-5",
+                    "mock-uid-emp2",
+                    "EMP-EMPLOYEE-1005",
+                    "Rahul Sharma",
+                    "rahul@company.com",
+                    "Product",
+                    "Product Designer",
+                    "casual",
+                    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5),
+                    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 6),
+                    2,
+                    false,
+                    "Attending close friend's wedding",
+                    "pending"
+                ),
+                createMockLeave(
+                    "leave-6",
+                    "mock-uid-emp2",
+                    "EMP-EMPLOYEE-1005",
+                    "Rahul Sharma",
+                    "rahul@company.com",
+                    "Product",
+                    "Product Designer",
+                    "sick",
+                    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 20),
+                    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 22),
+                    3,
+                    false,
+                    "Viral infection recovery",
+                    "rejected",
+                    "mock-uid-manager",
+                    "Project Manager",
+                    "Applied after dates without notice. Please submit medical documentation to HR."
+                ),
+            ];
 
-    //         mockLeaves.forEach((leave) => {
-    //             localStorage.setItem(`hrms_leave_${leave.id}`, JSON.stringify(leave));
-    //         });
-        // }
+            mockLeaves.forEach((leave) => {
+                localStorage.setItem(`hrms_leave_${leave.id}`, JSON.stringify(leave));
+            });
+        }
     }
-
+}
 
 export const leaveService = new LeaveService();
 export default leaveService;

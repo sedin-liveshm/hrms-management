@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -19,6 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { employeeSchema, type EmployeeFormValues } from "@/utils/validators";
+import { employeeService } from "@/services/employee.service";
 import type { Employee } from "@/types/employee";
 
 interface EmployeeFormProps {
@@ -56,12 +57,30 @@ export function EmployeeForm({
             designation: "",
             role: "employee",
             manager: "",
+            managerId: "",
+            managerName: "",
             joiningDate: new Date().toISOString().split("T")[0],
             salary: 0,
             status: "active",
             photoURL: "",
         },
     });
+
+    const [managers, setManagers] = useState<Employee[]>([]);
+
+    useEffect(() => {
+        const fetchManagers = async () => {
+            try {
+                const mgrs = await employeeService.getManagers();
+                setManagers(mgrs);
+            } catch (err) {
+                console.error("Failed to load managers list:", err);
+            }
+        };
+        if (isOpen) {
+            fetchManagers();
+        }
+    }, [isOpen]);
 
     // Keep track of values for customized select elements that don't use standard register
     const genderValue = watch("gender");
@@ -83,6 +102,8 @@ export function EmployeeForm({
                 designation: employee.designation || "",
                 role: employee.role || "employee",
                 manager: employee.manager || "",
+                managerId: employee.managerId || "",
+                managerName: employee.managerName || "",
                 joiningDate: employee.joiningDate || "",
                 salary: employee.salary || 0,
                 status: employee.status || "active",
@@ -102,6 +123,8 @@ export function EmployeeForm({
                 designation: "",
                 role: "employee",
                 manager: "",
+                managerId: "",
+                managerName: "",
                 joiningDate: new Date().toISOString().split("T")[0],
                 salary: 0,
                 status: "active",
@@ -128,7 +151,13 @@ export function EmployeeForm({
         }
 
         try {
-            await onSubmit(data);
+            const finalData = { ...data };
+            if (finalData.role !== "employee") {
+                finalData.managerId = null;
+                finalData.managerName = null;
+                finalData.manager = "";
+            }
+            await onSubmit(finalData);
             onClose();
         } catch (error) {
             // Handled in caller hook
@@ -326,21 +355,39 @@ export function EmployeeForm({
                         </div>
 
                         {/* Line Manager */}
-                        <div className="flex flex-col gap-1">
-                            <label htmlFor="manager" className="text-sm font-semibold text-foreground/90">
-                                Reporting Manager
-                            </label>
-                            <Input
-                                id="manager"
-                                placeholder="e.g. K. Raja"
-                                disabled={isSubmitting}
-                                className="h-10 rounded-xl"
-                                {...register("manager")}
-                            />
-                            {errors.manager && (
-                                <span className="text-xs text-destructive font-medium">{errors.manager.message}</span>
-                            )}
-                        </div>
+                        {roleValue === "employee" && (
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-semibold text-foreground/90">
+                                    Reporting Manager *
+                                </label>
+                                <Select
+                                    value={watch("managerId") || ""}
+                                    onValueChange={(val) => {
+                                        const mgr = managers.find((m) => m.employeeId === val);
+                                        if (mgr) {
+                                            setValue("managerId", mgr.employeeId);
+                                            setValue("managerName", mgr.name);
+                                            setValue("manager", mgr.name); // sync legacy
+                                        }
+                                    }}
+                                    disabled={isSubmitting}
+                                >
+                                    <SelectTrigger className="h-10 rounded-xl">
+                                        <SelectValue placeholder="Select Manager" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {managers.map((mgr) => (
+                                            <SelectItem key={mgr.employeeId} value={mgr.employeeId}>
+                                                {mgr.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.managerId && (
+                                    <span className="text-xs text-destructive font-medium">{errors.managerId.message}</span>
+                                )}
+                            </div>
+                        )}
 
                         {/* Joining Date */}
                         <div className="flex flex-col gap-1">
