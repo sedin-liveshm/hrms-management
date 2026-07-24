@@ -8,7 +8,9 @@ export const MODULE_PERMISSIONS: Record<string, UserRole[]> = {
   leave: ["admin", "hr", "manager", "employee"],
   attendance: ["admin", "hr", "manager", "employee"],
   employees: ["admin", "hr", "manager"],      // Employees List/CRUD: admin, hr, manager
-  payroll: ["admin", "hr"],        // Payroll module: admin, hr
+  payroll: ["admin", "hr", "manager", "employee"], // Personal payroll: all authenticated roles
+  payrollAdmin: ["admin", "hr"], // Payroll administration: admin, hr
+  expenses: ["admin", "hr"],       // Expense management: admin, hr
   settings: ["admin"],             // Settings module: admin
 };
 
@@ -30,8 +32,9 @@ export const ROUTE_TO_MODULE_MAP: Record<string, string> = {
   "/team/performance": "employees",
   
   "/organization": "dashboard",
+  "/payroll/admin": "payrollAdmin",
   "/payroll": "payroll",
-  "/expenses": "payroll",
+  "/expenses": "expenses",
   
   "/settings": "settings",
 };

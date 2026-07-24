@@ -166,6 +166,13 @@ export const navigationConfig: NavigationConfig = [
                 roles: ["admin", "hr", "manager"],
             },
             {
+                id: "team-timesheets",
+                label: "Timesheet Approvals",
+                href: "/team/timesheets",
+                icon: Timer,
+                roles: ["admin", "hr", "manager"],
+            },
+            {
                 id: "performance",
                 label: "Performance",
                 href: "/team/performance",
@@ -218,13 +225,20 @@ export const navigationConfig: NavigationConfig = [
         id: NAV_GROUP_IDS.FINANCE,
         label: "Finance",
         icon: DollarSign,
-        roles: ["admin", "hr"],
+        roles: ["admin", "hr", "manager", "employee"],
         items: [
             {
                 id: "payroll",
                 label: "Payroll",
                 href: "/payroll",
                 icon: DollarSign,
+                roles: ["admin", "hr", "manager", "employee"],
+            },
+            {
+                id: "company-timesheets",
+                label: "All Timesheets",
+                href: "/payroll/timesheets",
+                icon: Timer,
                 roles: ["admin", "hr"],
             },
             {

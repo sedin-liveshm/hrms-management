@@ -120,7 +120,11 @@ export function EmployeeDetails({ employee }: EmployeeDetailsProps) {
                         <DetailItem label="Designation" value={employee.designation} icon={<User className="size-4" />} />
                         <DetailItem label="Joining Date" value={formatDate(employee.joiningDate)} icon={<Calendar className="size-4" />} />
                         <DetailItem label="Reporting Manager" value={employee.manager || "Not Specified"} icon={<User className="size-4" />} />
-                        <DetailItem label="Salary (Annual)" value={formatSalary(employee.salary)} icon={<DollarSign className="size-4" />} />
+                        <DetailItem
+                            label="Salary (Annual)"
+                            value={employee.salary === undefined ? "Role-based structure" : formatSalary(employee.salary)}
+                            icon={<DollarSign className="size-4" />}
+                        />
                     </CardContent>
                 </Card>
 
