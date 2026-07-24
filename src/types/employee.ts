@@ -36,8 +36,9 @@ export interface Employee {
   managerName?: string | null;
   /** Join date in YYYY-MM-DD format */
   joiningDate: string;
-  /** Annual or monthly salary in numerical form */
-  salary: number;
+  /** Legacy annual or monthly salary in numerical form. Role-based payroll
+   * structures are used for newly created employees. */
+  salary?: number;
   /** Employment active status */
   status: "invited" | "active" | "inactive" | "on-leave";
   /** Indicates if the user account has been activated in Firebase Auth */

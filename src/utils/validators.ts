@@ -76,7 +76,6 @@ export const employeeSchema = z.object({
   managerId: z.string().nullable().optional().or(z.literal("")),
   managerName: z.string().nullable().optional().or(z.literal("")),
   joiningDate: z.string().min(1, "Joining date is required"),
-  salary: z.coerce.number().min(0, "Salary must be a positive number"),
   status: z.enum(["invited", "active", "inactive", "on-leave"] as const),
   photoURL: z.string().url("Please enter a valid image URL").optional().or(z.literal("")).or(z.null()),
 }).refine(

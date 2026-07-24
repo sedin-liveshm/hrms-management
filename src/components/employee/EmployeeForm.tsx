@@ -28,7 +28,6 @@ interface EmployeeFormProps {
     employee?: Employee | null;
     onSubmit: (data: EmployeeFormValues) => Promise<void>;
 }
-
 export function EmployeeForm({
     isOpen,
     onClose,
@@ -60,7 +59,6 @@ export function EmployeeForm({
             managerId: "",
             managerName: "",
             joiningDate: new Date().toISOString().split("T")[0],
-            salary: 0,
             status: "active",
             photoURL: "",
         },
@@ -105,7 +103,6 @@ export function EmployeeForm({
                 managerId: employee.managerId || "",
                 managerName: employee.managerName || "",
                 joiningDate: employee.joiningDate || "",
-                salary: employee.salary || 0,
                 status: employee.status || "active",
                 photoURL: employee.photoURL || "",
             });
@@ -126,7 +123,6 @@ export function EmployeeForm({
                 managerId: "",
                 managerName: "",
                 joiningDate: new Date().toISOString().split("T")[0],
-                salary: 0,
                 status: "active",
                 photoURL: "",
             });
@@ -403,24 +399,6 @@ export function EmployeeForm({
                             />
                             {errors.joiningDate && (
                                 <span className="text-xs text-destructive font-medium">{errors.joiningDate.message}</span>
-                            )}
-                        </div>
-
-                        {/* Salary */}
-                        <div className="flex flex-col gap-1">
-                            <label htmlFor="salary" className="text-sm font-semibold text-foreground/90">
-                                Salary (Annual) *
-                            </label>
-                            <Input
-                                id="salary"
-                                type="number"
-                                placeholder="0"
-                                disabled={isSubmitting}
-                                className="h-10 rounded-xl"
-                                {...register("salary")}
-                            />
-                            {errors.salary && (
-                                <span className="text-xs text-destructive font-medium">{errors.salary.message}</span>
                             )}
                         </div>
 
